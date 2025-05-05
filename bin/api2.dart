@@ -1,50 +1,50 @@
-import 'package:api2/api2.dart' as api2;
 import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
 
-void main()async{
-var router=Router();
+import 'package:api2/dist.dart';
 
-Response _getDist(){
-return Response.ok('from dist');
+Map<String, dynamic> getDistData(int index) {
+  List<dynamic> distData = json.decode(dist);
+  if (index < 0 || index > distData.length - 1) {
+    throw Exception('Index is out of bounds: (0 - ${distData.length - 1})');
+  }
+  return distData[index];
 }
 
-
-
-router.get('/',_home);
-router.get('/greet',_greeting);
-
-router.get('/dist/<index>', (Request req, String index){
-final int? parsedIndex= int.tryParse(index);
-if(parsedIndex==null){
-return Response.badRequest(
-body:json.encode(
-{'error':'Invalid Index: $index is not and integer'}
-),
-headers:{'content-type' :'application/json'}
-);
-}
-return _getDist();
-});
-
-
-
-var handler=Pipeline().addMiddleware(logRequests()).addHandler(router);
-var server=await io.serve(handler,"0.0.0.0",8080);
-print("server is live ${server.address.host} : ${server.port}");
+Response _getDist(Request req, int index) {
+  var distData = getDistData(index);
+  final jsonData = json.encode(distData);
+  return Response.ok(jsonData, headers: {'content-type': 'application/json'});
 }
 
-Response _home(Request req){
-return Response.ok("Hello api - Home page api");
+void main() async {
+  Router router = Router();
+  router.get('/', api);
+  router.get('/greet', _greetHandler);
+  router.get('/dist/<index>', (Request req, String index) {
+    final int? parsedIndex = int.tryParse(index);
+    if (parsedIndex == null) {
+      return Response.badRequest(
+        body: json.encode({'error': 'Index $index is not an integer'}),
+        headers: {'content-type': 'application/json'},
+      );
+    }
+    return _getDist(req, parsedIndex);
+  });
+
+  var handler = Pipeline().addMiddleware(logRequests()).addHandler(router);
+  var server = await io.serve(handler, "0.0.0.0", 8080);
+  print('${server.address} : ${server.port}');
+  print('server running');
 }
 
-Response _greeting(Request req){
-return Response.ok('Hello Greetings from api');
+Response api(Request req) {
+  return Response.ok('Hello again');
 }
 
-
-
-
+Response _greetHandler(Request req) {
+  return Response.ok('Hello There... Good day');
+}
