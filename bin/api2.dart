@@ -15,9 +15,16 @@ Map<String, dynamic> getDistData(int index) {
 }
 
 Response _getDist(Request req, int index) {
-  var distData = getDistData(index);
-  final jsonData = json.encode(distData);
-  return Response.ok(jsonData, headers: {'content-type': 'application/json'});
+  try {
+    var distData = getDistData(index);
+    final jsonData = json.encode(distData);
+    return Response.ok(jsonData, headers: {'content-type': 'application/json'});
+  } catch (e) {
+    return Response.notFound(
+      json.encode({'error': e.toString()}),
+      headers: {'content-type': 'application/json'},
+    );
+  }
 }
 
 void main() async {
